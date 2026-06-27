@@ -14,11 +14,13 @@ echo "  ██║     ██║   ██║██████╔╝████�
 echo "  ██║     ╚██╗ ██╔╝██╔═══╝ ╚════██║"
 echo "  ╚██████╗ ╚████╔╝ ██║     ███████║"
 echo "   ╚═════╝  ╚═══╝  ╚═╝     ╚══════╝"
-echo -e "${NC}  v$VERSION — Made by ${YELLOW}@radoslavgeme${NC}\n"
+echo -e "${NC}  v$VERSION — Made by ${YELLOW}@radoslavgeme${NC}"
+echo ""
 }
 help_main(){
 banner
-echo -e "${BOLD}USAGE:${NC} cvps <command> [options]\n"
+echo -e "${BOLD}USAGE:${NC} cvps <command> [options]"
+echo ""
 echo -e "${BOLD}CONTAINER COMMANDS:${NC}"
 echo -e "  ${GREEN}cvps create${NC} <name> <ram_mb> <cpus> <disk_gb>   Create a new container"
 echo -e "  ${GREEN}cvps list${NC}                                        List all containers"
@@ -29,128 +31,214 @@ echo -e "  ${GREEN}cvps delete${NC} <name>                              Delete a
 echo -e "  ${GREEN}cvps info${NC} <name>                                Show container info"
 echo -e "  ${GREEN}cvps ssh${NC} <name>                                 SSH into container"
 echo -e "  ${GREEN}cvps exec${NC} <name> <cmd>                          Run command in container"
-echo -e "  ${GREEN}cvps console${NC} <name>                             Open container console\n"
+echo -e "  ${GREEN}cvps console${NC} <name>                             Open container console"
+echo ""
 echo -e "${BOLD}RESOURCE COMMANDS:${NC}"
 echo -e "  ${GREEN}cvps resize${NC} <name> <ram_mb> <cpus> <disk_gb>   Resize resources"
 echo -e "  ${GREEN}cvps stats${NC} <name>                               Live resource usage"
 echo -e "  ${GREEN}cvps snapshot${NC} <name>                            Take a snapshot"
-echo -e "  ${GREEN}cvps restore${NC} <name> <snapshot>                  Restore a snapshot\n"
+echo -e "  ${GREEN}cvps restore${NC} <name> <snapshot>                  Restore a snapshot"
+echo ""
 echo -e "${BOLD}NETWORK COMMANDS:${NC}"
 echo -e "  ${GREEN}cvps ip${NC} <name>                                  Get container IP"
 echo -e "  ${GREEN}cvps port${NC} <name> <host_port> <cont_port>        Forward a port"
 echo -e "  ${GREEN}cvps ports${NC} <name>                               List forwarded ports"
-echo -e "  ${GREEN}cvps unport${NC} <name> <host_port>                  Remove port forward\n"
+echo -e "  ${GREEN}cvps unport${NC} <name> <host_port>                  Remove port forward"
+echo ""
 echo -e "${BOLD}USER COMMANDS:${NC}"
 echo -e "  ${GREEN}cvps login${NC}                                       Login"
 echo -e "  ${GREEN}cvps logout${NC}                                      Logout"
 echo -e "  ${GREEN}cvps whoami${NC}                                      Show current user"
-echo -e "  ${GREEN}cvps passwd${NC}                                      Change password\n"
+echo -e "  ${GREEN}cvps passwd${NC}                                      Change password"
+echo ""
 echo -e "${BOLD}ADMIN COMMANDS:${NC}"
 echo -e "  ${GREEN}cvps admin useradd${NC} <user> <pass>                Add user"
 echo -e "  ${GREEN}cvps admin userdel${NC} <user>                       Delete user"
 echo -e "  ${GREEN}cvps admin users${NC}                                 List all users"
 echo -e "  ${GREEN}cvps admin setlimit${NC} <user> <max>                Set container limit"
 echo -e "  ${GREEN}cvps admin transfer${NC} <container> <user>          Transfer container"
-echo -e "  ${GREEN}cvps admin logs${NC}                                  View system logs\n"
+echo -e "  ${GREEN}cvps admin logs${NC}                                  View system logs"
+echo ""
 echo -e "${BOLD}SYSTEM:${NC}"
 echo -e "  ${GREEN}cvps status${NC}                                      System status"
 echo -e "  ${GREEN}cvps update${NC}                                      Update CVPS"
-echo -e "  ${GREEN}cvps version${NC}                                     Show version\n"
+echo -e "  ${GREEN}cvps version${NC}                                     Show version"
+echo ""
 echo -e "${YELLOW}EXAMPLES:${NC}"
 echo -e "  cvps create myserver 512 1 10     # 512MB RAM, 1 CPU, 10GB"
 echo -e "  cvps create bigbox 2048 4 50      # 2GB RAM, 4 CPUs, 50GB"
 echo -e "  cvps port myserver 2222 22         # forward 2222->22"
 echo -e "  cvps ssh myserver                  # SSH into container"
-echo -e "  cvps stats myserver                # live stats\n"
+echo -e "  cvps stats myserver                # live stats"
+echo ""
 }
-get_token(){ [[ -f "$TOKEN_FILE" ]]&&cat "$TOKEN_FILE"||echo ""; }
+get_token(){ [[ -f "$TOKEN_FILE" ]] && cat "$TOKEN_FILE" || echo ""; }
 api(){
-  local method=$1 endpoint=$2 data=$3 tok=$(get_token)
+  local method=$1 endpoint=$2 data=$3
+  local tok=$(get_token)
   if [[ -n "$data" ]]; then
     curl -s -X "$method" "$API$endpoint" -H "Content-Type: application/json" -H "Authorization: Bearer $tok" -d "$data"
   else
     curl -s -X "$method" "$API$endpoint" -H "Authorization: Bearer $tok"
   fi
 }
-check_auth(){ [[ -z "$(get_token)" ]]&&echo -e "${RED}Not logged in. Run: cvps login${NC}"&&exit 1; }
+check_auth(){ [[ -z "$(get_token)" ]] && echo -e "${RED}Not logged in. Run: cvps login${NC}" && exit 1; }
 cmd_login(){
-  banner; read -p "Username: " user; read -s -p "Password: " pass; echo
+  banner
+  read -p "Username: " user
+  read -s -p "Password: " pass; echo
   resp=$(api POST /auth/login "{\"username\":\"$user\",\"password\":\"$pass\"}")
-  tok=$(echo "$resp"|python3 -c "import sys,json;print(json.load(sys.stdin).get('token',''))" 2>/dev/null)
-  if [[ -n "$tok" ]]; then echo "$tok">"$TOKEN_FILE"; chmod 600 "$TOKEN_FILE"; echo -e "${GREEN}Logged in as $user${NC}"
-  else echo -e "${RED}Login failed${NC}"; fi
+  tok=$(echo "$resp" | python3 -c "import sys,json;print(json.load(sys.stdin).get('token',''))" 2>/dev/null)
+  if [[ -n "$tok" ]]; then
+    echo "$tok" > "$TOKEN_FILE"; chmod 600 "$TOKEN_FILE"
+    echo -e "${GREEN}Logged in as $user${NC}"
+  else
+    echo -e "${RED}Login failed${NC}"
+  fi
 }
 cmd_logout(){ rm -f "$TOKEN_FILE"; echo -e "${GREEN}Logged out${NC}"; }
 cmd_whoami(){
-  check_auth; api GET /auth/me|python3 -c "
-import sys,json; d=json.load(sys.stdin)
-print(f'  User: {d[\"username\"]}\n  Role: {d[\"role\"]}\n  Containers: {len(d.get(\"containers\",[]))}')"
+  check_auth
+  api GET /auth/me | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+print(f'  User: {d[\"username\"]}')
+print(f'  Role: {d[\"role\"]}')
+print(f'  Containers: {len(d.get(\"containers\",[]))}')"
 }
 cmd_create(){
-  check_auth; [[ $# -lt 4 ]]&&echo -e "${RED}Usage: cvps create <name> <ram_mb> <cpus> <disk_gb>${NC}"&&exit 1
+  check_auth
+  [[ $# -lt 4 ]] && echo -e "${RED}Usage: cvps create <name> <ram_mb> <cpus> <disk_gb>${NC}" && exit 1
   echo -e "${CYAN}Creating container $1...${NC}"
-  api POST /containers/create "{\"name\":\"$1\",\"ram\":$2,\"cpus\":$3,\"disk\":$4}"|python3 -c "
-import sys,json; d=json.load(sys.stdin)
-if 'error' in d: print(f'\033[0;31m{d[\"error\"]}\033[0m')
-else: print(f'\033[0;32mCreated {d[\"name\"]}!\033[0m\n  IP: {d.get(\"ip\",\"pending\")}\n  RAM: {d[\"ram\"]}MB  CPUs: {d[\"cpus\"]}  Disk: {d[\"disk\"]}GB\n  SSH: ssh root@{d.get(\"ip\",\"<ip>\")}')"
+  api POST /containers/create "{\"name\":\"$1\",\"ram\":$2,\"cpus\":$3,\"disk\":$4}" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+if 'error' in d:
+  print(f'\033[0;31m{d[\"error\"]}\033[0m')
+else:
+  print(f'\033[0;32mCreated {d[\"name\"]}!\033[0m')
+  print(f'  IP:   {d.get(\"ip\",\"pending\")}')
+  print(f'  RAM:  {d[\"ram\"]}MB  CPUs: {d[\"cpus\"]}  Disk: {d[\"disk\"]}GB')
+  print(f'  SSH:  ssh root@{d.get(\"ip\",\"<ip>\")}')"
 }
 cmd_list(){
-  check_auth; api GET /containers/list|python3 -c "
-import sys,json; d=json.load(sys.stdin)
-if not d: print('  No containers.'); sys.exit()
+  check_auth
+  api GET /containers/list | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+if not d:
+  print('  No containers.')
+  sys.exit()
 print(f'  {\"NAME\":<20}{\"STATUS\":<12}{\"RAM\":<10}{\"CPU\":<8}{\"DISK\":<10}{\"IP\"}')
 print('  '+'-'*70)
 for c in d:
-  s=c.get('status','?'); col='\033[0;32m' if s=='running' else '\033[0;31m'
+  s=c.get('status','?')
+  col='\033[0;32m' if s=='running' else '\033[0;31m'
   print(f'  {c[\"name\"]:<20}{col}{s:<12}\033[0m{str(c[\"ram\"])+\"MB\":<10}{str(c[\"cpus\"]):<8}{str(c[\"disk\"])+\"GB\":<10}{c.get(\"ip\",\"-\")}')"
 }
-cmd_start(){ check_auth; api POST /containers/$1/start|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
-cmd_stop(){ check_auth; api POST /containers/$1/stop|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
-cmd_restart(){ check_auth; api POST /containers/$1/stop>/dev/null; sleep 1; api POST /containers/$1/start|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
+cmd_start(){ check_auth; api POST /containers/$1/start | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
+cmd_stop(){ check_auth; api POST /containers/$1/stop | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
+cmd_restart(){ check_auth; api POST /containers/$1/stop>/dev/null; sleep 1; api POST /containers/$1/start | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
 cmd_delete(){
-  check_auth; read -p "$(echo -e ${YELLOW}Delete $1? Type YES: ${NC})" c
-  [[ "$c" != "YES" ]]&&echo "Cancelled."&&return
-  api DELETE /containers/$1|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+  check_auth
+  read -p "$(echo -e "${YELLOW}Delete $1? Type YES: ${NC}")" c
+  [[ "$c" != "YES" ]] && echo "Cancelled." && return
+  api DELETE /containers/$1 | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
 }
 cmd_info(){
-  check_auth; api GET /containers/$1/info|python3 -c "
-import sys,json; d=json.load(sys.stdin)
-if 'error' in d: print(f'\033[0;31m{d[\"error\"]}\033[0m'); sys.exit()
-print(f'  Name:   {d[\"name\"]}\n  Status: {d[\"status\"]}\n  IP:     {d.get(\"ip\",\"-\")}\n  RAM:    {d[\"ram\"]}MB\n  CPUs:   {d[\"cpus\"]}\n  Disk:   {d[\"disk\"]}GB\n  Owner:  {d.get(\"owner\",\"-\")}\n  Ports:  {d.get(\"ports\",[])}')"
+  check_auth
+  api GET /containers/$1/info | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+if 'error' in d:
+  print(f'\033[0;31m{d[\"error\"]}\033[0m')
+  sys.exit()
+print(f'  Name:   {d[\"name\"]}')
+print(f'  Status: {d[\"status\"]}')
+print(f'  IP:     {d.get(\"ip\",\"-\")}')
+print(f'  RAM:    {d[\"ram\"]}MB')
+print(f'  CPUs:   {d[\"cpus\"]}')
+print(f'  Disk:   {d[\"disk\"]}GB')
+print(f'  Owner:  {d.get(\"owner\",\"-\")}')
+print(f'  Ports:  {d.get(\"ports\",[])}')"
 }
 cmd_ssh(){
-  check_auth; ip=$(api GET /containers/$1/info|python3 -c "import sys,json;print(json.load(sys.stdin).get('ip',''))" 2>/dev/null)
-  [[ -z "$ip" ]]&&echo -e "${RED}Not found or not running${NC}"&&exit 1
-  echo -e "${GREEN}Connecting to $1 ($ip)...${NC}"; ssh root@"$ip"
+  check_auth
+  ip=$(api GET /containers/$1/info | python3 -c "import sys,json;print(json.load(sys.stdin).get('ip',''))" 2>/dev/null)
+  [[ -z "$ip" ]] && echo -e "${RED}Not found or not running${NC}" && exit 1
+  echo -e "${GREEN}Connecting to $1 ($ip)...${NC}"
+  ssh root@"$ip"
 }
-cmd_exec(){ check_auth; name=$1; shift; api POST /containers/$name/exec "{\"cmd\":\"$*\"}"|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('output',d.get('error','')))"; }
-cmd_console(){ check_auth; [[ $EUID -ne 0 ]]&&echo -e "${RED}Requires root${NC}"&&exit 1; lxc-console -n "$1"; }
+cmd_exec(){
+  check_auth
+  name=$1; shift
+  api POST /containers/$name/exec "{\"cmd\":\"$*\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('output',d.get('error','')))"
+}
+cmd_console(){
+  check_auth
+  [[ $EUID -ne 0 ]] && echo -e "${RED}Requires root${NC}" && exit 1
+  lxc-console -n "$1"
+}
 cmd_stats(){
-  check_auth; echo -e "${CYAN}Live stats for $1 — Ctrl+C to stop${NC}"
-  while true; do resp=$(api GET /containers/$1/stats); clear; echo -e "${CYAN}=== $1 ===${NC}"
-    echo "$resp"|python3 -c "
-import sys,json; d=json.load(sys.stdin)
-print(f'  CPU:  {d.get(\"cpu\",0):.1f}%\n  RAM:  {d.get(\"ram_used\",0)}MB / {d.get(\"ram_total\",0)}MB\n  Disk: {d.get(\"disk_used\",0)}GB / {d.get(\"disk_total\",0)}GB\n  Net:  TX {d.get(\"net_tx\",\"0\")}  RX {d.get(\"net_rx\",\"0\")}')"
-    sleep 2; done
+  check_auth
+  echo -e "${CYAN}Live stats for $1 — Ctrl+C to stop${NC}"
+  while true; do
+    resp=$(api GET /containers/$1/stats)
+    clear
+    echo -e "${CYAN}=== $1 ===${NC}"
+    echo "$resp" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+print(f'  CPU:  {d.get(\"cpu\",0):.1f}%')
+print(f'  RAM:  {d.get(\"ram_used\",0)}MB / {d.get(\"ram_total\",0)}MB')
+print(f'  Disk: {d.get(\"disk_used\",0)}GB / {d.get(\"disk_total\",0)}GB')
+print(f'  Net:  TX {d.get(\"net_tx\",\"0\")}  RX {d.get(\"net_rx\",\"0\")}')"
+    sleep 2
+  done
 }
-cmd_ip(){ check_auth; api GET /containers/$1/info|python3 -c "import sys,json;print(json.load(sys.stdin).get('ip','-'))"; }
-cmd_port(){ check_auth; [[ $# -lt 3 ]]&&echo -e "${RED}Usage: cvps port <name> <host_port> <cont_port>${NC}"&&exit 1; api POST /containers/$1/port "{\"host_port\":$2,\"cont_port\":$3}"|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
-cmd_ports(){ check_auth; api GET /containers/$1/ports|python3 -c "
-import sys,json; d=json.load(sys.stdin); ports=d.get('ports',[])
-if not ports: print('  No ports.')
-for p in ports: print(f'  {p[\"host_port\"]} -> {p[\"cont_port\"]}')" }
-cmd_unport(){ check_auth; api DELETE /containers/$1/port/$2|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
-cmd_resize(){ check_auth; [[ $# -lt 4 ]]&&echo -e "${RED}Usage: cvps resize <name> <ram_mb> <cpus> <disk_gb>${NC}"&&exit 1; api POST /containers/$1/resize "{\"ram\":$2,\"cpus\":$3,\"disk\":$4}"|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
-cmd_snapshot(){ check_auth; echo -e "${CYAN}Snapshotting $1...${NC}"; api POST /containers/$1/snapshot|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
-cmd_restore(){ check_auth; api POST /containers/$1/restore "{\"snapshot\":\"$2\"}"|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"; }
+cmd_ip(){ check_auth; api GET /containers/$1/info | python3 -c "import sys,json;print(json.load(sys.stdin).get('ip','-'))"; }
+cmd_port(){
+  check_auth
+  [[ $# -lt 3 ]] && echo -e "${RED}Usage: cvps port <name> <host_port> <cont_port>${NC}" && exit 1
+  api POST /containers/$1/port "{\"host_port\":$2,\"cont_port\":$3}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+}
+cmd_ports(){
+  check_auth
+  api GET /containers/$1/ports | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+ports=d.get('ports',[])
+if not ports:
+  print('  No ports.')
+for p in ports:
+  print(f'  {p[\"host_port\"]} -> {p[\"cont_port\"]}')"
+}
+cmd_unport(){ check_auth; api DELETE /containers/$1/port/$2 | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error',')))"; }
+cmd_resize(){
+  check_auth
+  [[ $# -lt 4 ]] && echo -e "${RED}Usage: cvps resize <name> <ram_mb> <cpus> <disk_gb>${NC}" && exit 1
+  api POST /containers/$1/resize "{\"ram\":$2,\"cpus\":$3,\"disk\":$4}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+}
+cmd_snapshot(){
+  check_auth
+  echo -e "${CYAN}Snapshotting $1...${NC}"
+  api POST /containers/$1/snapshot | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+}
+cmd_restore(){
+  check_auth
+  api POST /containers/$1/restore "{\"snapshot\":\"$2\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+}
 cmd_passwd(){
-  check_auth; read -s -p "New password: " p1; echo; read -s -p "Confirm: " p2; echo
-  [[ "$p1" != "$p2" ]]&&echo -e "${RED}Passwords don't match${NC}"&&exit 1
-  api POST /auth/passwd "{\"password\":\"$p1\"}"|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+  check_auth
+  read -s -p "New password: " p1; echo
+  read -s -p "Confirm: " p2; echo
+  [[ "$p1" != "$p2" ]] && echo -e "${RED}Passwords don't match${NC}" && exit 1
+  api POST /auth/passwd "{\"password\":\"$p1\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
 }
 cmd_status(){
-  api GET /system/status|python3 -c "
-import sys,json; d=json.load(sys.stdin)
+  api GET /system/status | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
 print(f'  CVPS v{d.get(\"version\",\"?\")} — Made by @radoslavgeme')
 print(f'  Containers: {d.get(\"running\",0)} running / {d.get(\"total\",0)} total')
 print(f'  Users:      {d.get(\"users\",0)}')
@@ -162,28 +250,64 @@ print(f'  API:        \033[0;32mONLINE\033[0m')"
 cmd_admin(){
   check_auth
   case $1 in
-    useradd) [[ $# -lt 3 ]]&&echo -e "${RED}Usage: cvps admin useradd <user> <pass>${NC}"&&exit 1; api POST /admin/users "{\"username\":\"$2\",\"password\":\"$3\"}"|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))";;
-    userdel) api DELETE /admin/users/$2|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))";;
-    users) api GET /admin/users|python3 -c "
-import sys,json; d=json.load(sys.stdin)
-print(f'  {\"USER\":<20}{\"ROLE\":<12}{\"CONTAINERS\"}'); print('  '+'-'*45)
-for u in d: print(f'  {u[\"username\"]:<20}{u[\"role\"]:<12}{len(u.get(\"containers\",[\]))}')";;
-    setlimit) api POST /admin/users/$2/limit "{\"max_containers\":$3}"|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))";;
-    transfer) api POST /admin/containers/$2/transfer "{\"to\":\"$3\"}"|python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))";;
-    logs) api GET /admin/logs|python3 -c "import sys,json;[print(f'  {l}') for l in json.load(sys.stdin).get('logs',[])]";;
-    *) echo -e "${RED}Unknown admin command. Run: cvps help${NC}";;
+    useradd)
+      [[ $# -lt 3 ]] && echo -e "${RED}Usage: cvps admin useradd <user> <pass>${NC}" && exit 1
+      api POST /admin/users "{\"username\":\"$2\",\"password\":\"$3\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+      ;;
+    userdel)
+      api DELETE /admin/users/$2 | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+      ;;
+    users)
+      api GET /admin/users | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+print(f'  {\"USER\":<20}{\"ROLE\":<12}{\"CONTAINERS\"}')
+print('  '+'-'*45)
+for u in d:
+  print(f'  {u[\"username\"]:<20}{u[\"role\"]:<12}{len(u.get(\"containers\",[\]))}')"
+      ;;
+    setlimit)
+      api POST /admin/users/$2/limit "{\"max_containers\":$3}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+      ;;
+    transfer)
+      api POST /admin/containers/$2/transfer "{\"to\":\"$3\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('message',d.get('error','')))"
+      ;;
+    logs)
+      api GET /admin/logs | python3 -c "import sys,json;[print(f'  {l}') for l in json.load(sys.stdin).get('logs',[])]"
+      ;;
+    *)
+      echo -e "${RED}Unknown admin command. Run: cvps help${NC}"
+      ;;
   esac
 }
-cmd_update(){ echo -e "${CYAN}Updating CVPS...${NC}"; curl -sSL https://raw.githubusercontent.com/yespleaselet2-create/cvps/main/install.sh|bash; }
+cmd_update(){ echo -e "${CYAN}Updating CVPS...${NC}"; curl -sSL https://raw.githubusercontent.com/yespleaselet2-create/cvps/main/install.sh | bash; }
 case $1 in
-  create) shift;cmd_create "$@";;list) cmd_list;;start) cmd_start "$2";;stop) cmd_stop "$2";;
-  restart) cmd_restart "$2";;delete) cmd_delete "$2";;info) cmd_info "$2";;ssh) cmd_ssh "$2";;
-  exec) shift;cmd_exec "$@";;console) cmd_console "$2";;stats) cmd_stats "$2";;ip) cmd_ip "$2";;
-  port) shift;cmd_port "$@";;ports) cmd_ports "$2";;unport) cmd_unport "$2" "$3";;
-  resize) shift;cmd_resize "$@";;snapshot) cmd_snapshot "$2";;restore) cmd_restore "$2" "$3";;
-  login) cmd_login;;logout) cmd_logout;;whoami) cmd_whoami;;passwd) cmd_passwd;;
-  admin) shift;cmd_admin "$@";;status) cmd_status;;update) cmd_update;;
-  version) echo "CVPS v$VERSION — Made by @radoslavgeme";;
-  help|--help|-h|"") help_main;;
-  *) echo -e "${RED}Unknown command: $1${NC}\nRun: cvps help";;
+  create)   shift; cmd_create "$@" ;;
+  list)     cmd_list ;;
+  start)    cmd_start "$2" ;;
+  stop)     cmd_stop "$2" ;;
+  restart)  cmd_restart "$2" ;;
+  delete)   cmd_delete "$2" ;;
+  info)     cmd_info "$2" ;;
+  ssh)      cmd_ssh "$2" ;;
+  exec)     shift; cmd_exec "$@" ;;
+  console)  cmd_console "$2" ;;
+  stats)    cmd_stats "$2" ;;
+  ip)       cmd_ip "$2" ;;
+  port)     shift; cmd_port "$@" ;;
+  ports)    cmd_ports "$2" ;;
+  unport)   cmd_unport "$2" "$3" ;;
+  resize)   shift; cmd_resize "$@" ;;
+  snapshot) cmd_snapshot "$2" ;;
+  restore)  cmd_restore "$2" "$3" ;;
+  login)    cmd_login ;;
+  logout)   cmd_logout ;;
+  whoami)   cmd_whoami ;;
+  passwd)   cmd_passwd ;;
+  admin)    shift; cmd_admin "$@" ;;
+  status)   cmd_status ;;
+  update)   cmd_update ;;
+  version)  echo "CVPS v$VERSION — Made by @radoslavgeme" ;;
+  help|--help|-h|"") help_main ;;
+  *) echo -e "${RED}Unknown command: $1${NC}"; echo "Run: cvps help" ;;
 esac
