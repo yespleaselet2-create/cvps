@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CVPS Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#13131a;--border:#1e1e2e;--accent:#00ffcc;--danger:#ff4757;--warn:#ffa502;--text:#e0e0e0;--muted:#666}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at center,#0d1117 0%,#0a0a0f 100%)}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
+.login-box .logo{font-size:28px;font-weight:700;color:var(--accent);letter-spacing:4px;margin-bottom:8px}
+.login-box .sub{color:var(--muted);font-size:13px;margin-bottom:32px}
+.form-group{margin-bottom:16px;text-align:left}
+.form-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.form-group input{width:100%;padding:12px 16px;background:#0d0d14;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none;transition:.2s}
+.form-group input:focus{border-color:var(--accent)}
+.btn{width:100%;padding:12px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:.2s;margin-top:8px}
+.btn:hover{opacity:.85}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+.error{color:var(--danger);font-size:13px;margin-top:12px}
+.app{display:none;flex-direction:column;min-height:100vh}
+.sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);padding:24px 16px;position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column}
+.sidebar .brand{font-size:18px;font-weight:700;color:var(--accent);letter-spacing:3px;margin-bottom:4px}
+.sidebar .brand-sub{font-size:10px;color:var(--muted);margin-bottom:32px}
+.nav-item{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:.2s;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.nav-item:hover,.nav-item.active{background:#1a1a2e;color:var(--accent)}
+.sidebar-bottom{margin-top:auto}
+.main{margin-left:220px;padding:32px;flex:1}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}
+.topbar h1{font-size:20px;font-weight:600}
+.topbar .user-badge{background:var(--card);border:1px solid var(--border);padding:8px 16px;border-radius:8px;font-size:13px;color:var(--muted)}
+.topbar .user-badge span{color:var(--accent)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.stat-card .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.stat-card .value{font-size:28px;font-weight:700;color:var(--accent)}
+.stat-card .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.section-header h2{font-size:15px;font-weight:600}
+.btn-sm{padding:8px 16px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;border:none;transition:.2s}
+.btn-accent{background:var(--accent);color:#000}
+.btn-accent:hover{opacity:.85}
+.btn-red{background:var(--danger);color:#fff}
+.btn-red:hover{opacity:.85}
+.btn-green{background:#00b894;color:#fff}
+.btn-orange{background:var(--warn);color:#000}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 12px 12px}
+td{padding:12px;border-top:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:hover td{background:#0d0d14}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:#00b89420;color:#00b894}
+.badge-red{background:#ff475720;color:#ff4757}
+.badge-admin{background:#9b59b620;color:#9b59b6}
+.badge-user{background:#0099ff20;color:#0099ff}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:420px}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:20px}
+.modal .form-group{margin-bottom:14px}
+.modal .actions{display:flex;gap:10px;margin-top:20px}
+.modal .actions button{flex:1}
+.page{display:none}
+.page.active{display:block}
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:14px}
+.log-box{background:#0d0d14;border:1px solid var(--border);border-radius:8px;padding:16px;font-family:monospace;font-size:12px;max-height:400px;overflow-y:auto;color:#aaa}
+.log-line{padding:2px 0;border-bottom:1px solid #1a1a1a}
+.alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px}
+.alert-success{background:#00b89420;color:#00b894;border:1px solid #00b89440}
+.alert-error{background:#ff475720;color:#ff4757;border:1px solid #ff475740}
+</style>
+</head>
+<body>
+
+<div class="login-wrap" id="loginPage">
+  <div class="login-box">
+    <div class="logo">CVPS</div>
+    <div class="sub">Made by @radoslavgeme</div>
+    <div class="form-group"><label>Username</label><input type="text" id="loginUser" placeholder="admin"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn" onclick="doLogin()">LOGIN</button>
+    <div class="error" id="loginErr"></div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="sidebar">
+    <div>
+      <div class="brand">CVPS</div>
+      <div class="brand-sub">Made by @radoslavgeme</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">📊 Dashboard</div>
+      <div class="nav-item" onclick="showPage('containers')">🖥️ Containers</div>
+      <div class="nav-item admin-only" onclick="showPage('users')" style="display:none">👥 Users</div>
+      <div class="nav-item admin-only" onclick="showPage('logs')" style="display:none">📋 Logs</div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="nav-item" onclick="doLogout()">🚪 Logout</div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="user-badge">Logged in as <span id="currentUser">-</span></div>
+    </div>
+
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">Running</div><div class="value" id="stat-running">-</div><div class="sub">containers</div></div>
+        <div class="stat-card"><div class="label">Total</div><div class="value" id="stat-total">-</div><div class="sub">containers</div></div>
+        <div class="stat-card"><div class="label">Users</div><div class="value" id="stat-users">-</div><div class="sub">accounts</div></div>
+        <div class="stat-card"><div class="label">Host RAM</div><div class="value" id="stat-ram">-</div><div class="sub" id="stat-ram-sub"></div></div>
+        <div class="stat-card"><div class="label">Host CPU</div><div class="value" id="stat-cpu">-</div><div class="sub">usage</div></div>
+        <div class="stat-card"><div class="label">Uptime</div><div class="value" style="font-size:14px;margin-top:8px" id="stat-uptime">-</div></div>
+      </div>
+      <div class="section">
+        <div class="section-header"><h2>Quick Actions</h2></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn-sm btn-accent" onclick="showPage('containers');openCreateModal()">+ New Container</button>
+          <button class="btn-sm btn-secondary" onclick="loadDashboard()">↻ Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-containers">
+      <div class="section">
+        <div class="section-header">
+          <h2>Containers</h2>
+          <button class="btn-sm btn-accent" onclick="openCreateModal()">+ Create</button>
+        </div>
+        <div id="containers-table"><div class="empty">Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-users">
+      <div class="section">
+        <div class="section-header">
+          <h2>Users</h2>
+          <button class="btn-sm btn-accent" onclick="openUserModal()">+ Add User</button>
+        </div>
+        <div id="users-table"><div class="empty">Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-logs">
+      <div class="section">
+        <div class="section-header"><h2>System Logs</h2><button class="btn-sm btn-secondary" onclick="loadLogs()">↻ Refresh</button></div>
+        <div class="log-box" id="log-box">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <h2>Create Container</h2>
+    <div class="form-group"><label>Name</label><input type="text" id="c-name" placeholder="myserver"></div>
+    <div class="form-group"><label>RAM (MB)</label><input type="number" id="c-ram" placeholder="512" value="512"></div>
+    <div class="form-group"><label>CPUs</label><input type="number" id="c-cpus" placeholder="1" value="1"></div>
+    <div class="form-group"><label>Disk (GB)</label><input type="number" id="c-disk" placeholder="10" value="10"></div>
+    <div id="create-alert"></div>
+    <div class="actions">
+      <button class="btn-sm btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+      <button class="btn-sm btn-accent" onclick="doCreate()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <h2>Add User</h2>
+    <div class="form-group"><label>Username</label><input type="text" id="u-name" placeholder="username"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="u-pass" placeholder="password"></div>
+    <div id="user-alert"></div>
+    <div class="actions">
+      <button class="btn-sm btn-secondary" onclick="closeModal('userModal')">Cancel</button>
+      <button class="btn-sm btn-accent" onclick="doAddUser()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="portModal">
+  <div class="modal">
+    <h2>Forward Port</h2>
+    <input type="hidden" id="port-container">
+    <div class="form-group"><label>Host Port</label><input type="number" id="p-host" placeholder="2222"></div>
+    <div class="form-group"><label>Container Port</label><input type="number" id="p-cont" placeholder="22"></div>
+    <div class="actions">
+      <button class="btn-sm btn-secondary" onclick="closeModal('portModal')">Cancel</button>
+      <button class="btn-sm btn-accent" onclick="doAddPort()">Forward</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "";
+let token = localStorage.getItem("cvps_token") || "";
+let currentRole = "";
+
+async function api(method, endpoint, data) {
+  const opts = { method, headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" } };
+  if (data) opts.body = JSON.stringify(data);
+  const r = await fetch(API + "/api" + endpoint, opts);
+  return r.json();
+}
+
+async function doLogin() {
+  const user = document.getElementById("loginUser").value;
+  const pass = document.getElementById("loginPass").value;
+  const d = await fetch("/api/auth/login", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username:user,password:pass}) });
+  const j = await d.json();
+  if (j.token) {
+    token = j.token; localStorage.setItem("cvps_token", token);
+    const me = await api("GET", "/auth/me");
+    currentRole = me.role;
+    document.getElementById("currentUser").textContent = me.username + " (" + me.role + ")";
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+    if (currentRole === "admin") document.querySelectorAll(".admin-only").forEach(e => e.style.display = "flex");
+    loadDashboard(); loadContainers();
+  } else {
+    document.getElementById("loginErr").textContent = j.error || "Login failed";
+  }
+}
+
+function doLogout() { localStorage.removeItem("cvps_token"); location.reload(); }
+
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("page-" + name).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n => { if(n.textContent.toLowerCase().includes(name.slice(0,4))) n.classList.add("active"); });
+  const titles = {dashboard:"Dashboard",containers:"Containers",users:"Users",logs:"System Logs"};
+  document.getElementById("pageTitle").textContent = titles[name] || name;
+  if (name === "users") loadUsers();
+  if (name === "logs") loadLogs();
+  if (name === "containers") loadContainers();
+}
+
+async function loadDashboard() {
+  const d = await api("GET", "/system/status");
+  document.getElementById("stat-running").textContent = d.running ?? "-";
+  document.getElementById("stat-total").textContent = d.total ?? "-";
+  document.getElementById("stat-users").textContent = d.users ?? "-";
+  document.getElementById("stat-ram").textContent = (d.host_ram_used ?? "-") + "MB";
+  document.getElementById("stat-ram-sub").textContent = "of " + (d.host_ram_total ?? "-") + "MB";
+  document.getElementById("stat-cpu").textContent = (d.host_cpu ?? 0).toFixed(1) + "%";
+  document.getElementById("stat-uptime").textContent = d.uptime ?? "-";
+}
+
+async function loadContainers() {
+  const d = await api("GET", "/containers/list");
+  const el = document.getElementById("containers-table");
+  if (!d.length) { el.innerHTML = '<div class="empty">No containers yet. Create one!</div>'; return; }
+  el.innerHTML = '<table><thead><tr><th>Name</th><th>Status</th><th>RAM</th><th>CPU</th><th>Disk</th><th>IP</th><th>Owner</th><th>Actions</th></tr></thead><tbody>' +
+    d.map(c => `<tr>
+      <td><b>${c.name}</b></td>
+      <td><span class="badge ${c.status==='running'?'badge-green':'badge-red'}">${c.status}</span></td>
+      <td>${c.ram}MB</td><td>${c.cpus}</td><td>${c.disk}GB</td>
+      <td style="font-family:monospace;font-size:12px">${c.ip||'-'}</td>
+      <td>${c.owner||'-'}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        ${c.status==='running'?`<button class="btn-sm btn-orange" onclick="containerAction('stop','${c.name}')">Stop</button>`:`<button class="btn-sm btn-green" onclick="containerAction('start','${c.name}')">Start</button>`}
+        <button class="btn-sm btn-secondary" onclick="openPortModal('${c.name}')">Port</button>
+        <button class="btn-sm btn-red" onclick="containerAction('delete','${c.name}')">Del</button>
+      </td>
+    </tr>`).join("") + '</tbody></table>';
+}
+
+async function containerAction(action, name) {
+  if (action === "delete" && !confirm("Delete " + name + "? This is permanent.")) return;
+  if (action === "start") await api("POST", "/containers/" + name + "/start");
+  else if (action === "stop") await api("POST", "/containers/" + name + "/stop");
+  else if (action === "delete") await api("DELETE", "/containers/" + name);
+  loadContainers(); loadDashboard();
+}
+
+function openCreateModal() { document.getElementById("createModal").classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+async function doCreate() {
+  const name = document.getElementById("c-name").value;
+  const ram = parseInt(document.getElementById("c-ram").value);
+  const cpus = parseInt(document.getElementById("c-cpus").value);
+  const disk = parseInt(document.getElementById("c-disk").value);
+  const el = document.getElementById("create-alert");
+  el.innerHTML = '<div class="alert alert-success">Creating... this may take a minute.</div>';
+  const d = await api("POST", "/containers/create", {name,ram,cpus,disk});
+  if (d.error) { el.innerHTML = '<div class="alert alert-error">' + d.error + '</div>'; return; }
+  el.innerHTML = '<div class="alert alert-success">Created! IP: ' + (d.ip||'pending') + '</div>';
+  loadContainers(); loadDashboard();
+}
+
+async function loadUsers() {
+  const d = await api("GET", "/admin/users");
+  const el = document.getElementById("users-table");
+  if (!d.length) { el.innerHTML = '<div class="empty">No users.</div>'; return; }
+  el.innerHTML = '<table><thead><tr><th>Username</th><th>Role</th><th>Containers</th><th>Actions</th></tr></thead><tbody>' +
+    d.map(u => `<tr>
+      <td><b>${u.username}</b></td>
+      <td><span class="badge ${u.role==='admin'?'badge-admin':'badge-user'}">${u.role}</span></td>
+      <td>${u.containers?.length||0}</td>
+      <td>${u.username!=='admin'?`<button class="btn-sm btn-red" onclick="delUser('${u.username}')">Delete</button>`:'-'}</td>
+    </tr>`).join("") + '</tbody></table>';
+}
+
+function openUserModal() { document.getElementById("userModal").classList.add("open"); }
+
+async function doAddUser() {
+  const username = document.getElementById("u-name").value;
+  const password = document.getElementById("u-pass").value;
+  const d = await api("POST", "/admin/users", {username, password});
+  const el = document.getElementById("user-alert");
+  if (d.error) { el.innerHTML = '<div class="alert alert-error">' + d.error + '</div>'; return; }
+  el.innerHTML = '<div class="alert alert-success">User created!</div>';
+  loadUsers();
+}
+
+async function delUser(username) {
+  if (!confirm("Delete user " + username + "?")) return;
+  await api("DELETE", "/admin/users/" + username);
+  loadUsers();
+}
+
+async function loadLogs() {
+  const d = await api("GET", "/admin/logs");
+  const el = document.getElementById("log-box");
+  const logs = d.logs || [];
+  el.innerHTML = logs.length ? logs.map(l => '<div class="log-line">' + l + '</div>').join("") : "No logs.";
+  el.scrollTop = el.scrollHeight;
+}
+
+function openPortModal(name) { document.getElementById("port-container").value = name; document.getElementById("portModal").classList.add("open"); }
+
+async function doAddPort() {
+  const name = document.getElementById("port-container").value;
+  const hp = parseInt(document.getElementById("p-host").value);
+  const cp = parseInt(document.getElementById("p-cont").value);
+  await api("POST", "/containers/" + name + "/port", {host_port:hp,cont_port:cp});
+  closeModal("portModal"); loadContainers();
+}
+
+if (token) {
+  api("GET", "/auth/me").then(me => {
+    if (me.username) {
+      currentRole = me.role;
+      document.getElementById("currentUser").textContent = me.username + " (" + me.role + ")";
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("app").style.display = "flex";
+      if (currentRole === "admin") document.querySelectorAll(".admin-only").forEach(e => e.style.display = "flex");
+      loadDashboard(); loadContainers();
+    }
+  });
+}
+</script>
+</body>
+</html>
