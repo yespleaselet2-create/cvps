@@ -21,7 +21,7 @@ apt-get update -qq
 apt-get install -y -qq lxc lxc-utils lxc-templates uidmap python3 python3-pip nginx curl jq net-tools iptables
 
 log "Installing Python deps..."
-pip3 install flask flask-cors bcrypt pyjwt discord.py psutil --break-system-packages -q
+pip3 install flask flask-cors bcrypt pyjwt discord.py psutil --break-system-packages --ignore-installed -q
 
 log "Setting up directories..."
 mkdir -p /opt/cvps/{data,logs,panel}
